@@ -2,13 +2,20 @@ package com.gloushkov.dogceo.ui.main
 
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import com.gloushkov.dogceo.R
+import com.gloushkov.dogceo.databinding.FragmentMainBinding
+import com.gloushkov.dogceo.ui.main.MainViewModel.SubmitError.*
 
+private val TAG = "MainFragment"
 class MainFragment : Fragment() {
+
+    lateinit var binding: FragmentMainBinding
 
     companion object {
         fun newInstance() = MainFragment()
@@ -26,7 +33,37 @@ class MainFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        return inflater.inflate(R.layout.fragment_main, container, false)
+        binding = FragmentMainBinding.inflate(layoutInflater, container, false)
+        return binding.root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        viewModel.submitError.observe(viewLifecycleOwner) {
+            Log.w(TAG, "submitError: $it")
+            when (it) {
+                NOT_A_NUMBER -> binding.tilCount.error = requireContext().resources.getString(R.string.submit_input_not_integer)
+                BELLOW_RANGE, ABOVE_RANGE -> binding.tilCount.error = requireContext().resources.getString(R.string.submit_input_count_range_not_valid)
+                RESOURCE_ERROR -> {
+                    binding.tilCount.error = null
+                    //TODO show some ui error
+                }
+                null -> binding.tilCount.error = null
+            }
+        }
+
+        binding.etCount.setOnEditorActionListener { _, actionId, _ ->
+            Log.v(TAG, "etCount -- editor action: $actionId")
+            if (EditorInfo.IME_ACTION_GO == actionId) {
+                viewModel.onSubmit(binding.etCount.text.toString())
+                return@setOnEditorActionListener true
+            }
+            false
+        }
+
+        binding.btnSubmit.setOnClickListener {
+            viewModel.onSubmit(binding.etCount.text.toString())
+        }
+    }
 }

@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">DOG CEO</string>
+
+    <string name="button_previous">Previous</string>
+    <string name="button_next">Next</string>
+    <string name="button_submit">Submit</string>
+    <string name="hint_enter_count">Enter between 1 and 10 images to get</string>
+
+    <string name="submit_input_not_integer">You must input an integer.</string>
+    <string name="submit_input_count_range_not_valid">You must enter a number between 1 and 10.</string>
 </resources>

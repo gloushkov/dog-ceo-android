@@ -28,7 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:enabled="false"
-        android:text="Previous"
+        android:text="@string/button_previous"
         app:layout_constraintEnd_toStartOf="@+id/btnNext"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/guideline" />
@@ -37,7 +37,7 @@
         android:id="@+id/btnNext"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Next"
+        android:text="@string/button_next"
         app:layout_constraintBaseline_toBaselineOf="@+id/btnPrevious"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/btnPrevious" />
@@ -48,13 +48,13 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:layout_marginEnd="16dp"
-        android:text="Submit"
+        android:text="@string/button_submit"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnNext" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilCount"
-        android:hint="Enter count"
+        android:hint="@string/hint_enter_count"
         android:layout_marginStart="16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btnSubmit"
