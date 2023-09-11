@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "DOG CEO"
 include(":app")
- 
+include(":doglib")
