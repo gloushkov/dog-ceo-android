@@ -12,10 +12,10 @@ import com.gloushkov.dogceo.R
 import com.gloushkov.dogceo.databinding.FragmentMainBinding
 import com.gloushkov.dogceo.ui.main.MainViewModel.SubmitError.*
 
-private val TAG = "MainFragment"
+private const val TAG = "MainFragment"
 class MainFragment : Fragment() {
 
-    lateinit var binding: FragmentMainBinding
+    private lateinit var binding: FragmentMainBinding
 
     companion object {
         fun newInstance() = MainFragment()
@@ -40,6 +40,13 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        viewModel.loading.observe(viewLifecycleOwner) {
+            binding.progressSpinner.visibility = if (it) View.VISIBLE else View.GONE
+        }
+        viewModel.previousButtonEnabled.observe(viewLifecycleOwner) {
+            binding.btnPrevious.isEnabled = it
+        }
+
         viewModel.submitError.observe(viewLifecycleOwner) {
             Log.w(TAG, "submitError: $it")
             when (it) {
@@ -51,6 +58,17 @@ class MainFragment : Fragment() {
                 }
                 null -> binding.tilCount.error = null
             }
+        }
+
+        viewModel.currentBitmap.observe(viewLifecycleOwner) {
+            binding.ivMain.setImageBitmap(it)
+        }
+
+        binding.btnNext.setOnClickListener {
+            viewModel.onNext()
+        }
+        binding.btnPrevious.setOnClickListener {
+            viewModel.onPrevious()
         }
 
         binding.etCount.setOnEditorActionListener { _, actionId, _ ->
