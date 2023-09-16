@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.UUID
 
 /**
  * Created by Ognian Gloushkov on 11.09.23.
@@ -30,27 +31,35 @@ object DogLib : IDogLib {
 
     private var currentIndex = 0
     override suspend fun getImage(context: Context): Flow<Resource<Bitmap>> = flow {
-        imageRepository.getRandomImage(context).collect { resource ->
-            when (resource.status) {
+        val uuid = UUID.randomUUID().toString()
+        imageRepository.getRandomImage(context, uuid).collect { result ->
+            when (result.second.status) {
                 IDLE -> {}
                 LOADING -> {
-                    resource.data?.let { data ->
-                        mutex.withLock {
+                    mutex.withLock {
+                        if (result.second.data == null) {
+                            images.add(Pair(uuid, result.second))
+                        } else {
+                            val index = images.indexOfFirst { it.first == uuid }
+                            if (index != -1) {
+                                val newPair = Pair(result.second.data!!.imageUri, result.second)
+                                images[index] = newPair
+                            }
                             Log.d(TAG, "API returned a URL. Downloading or fetching from disk.")
-                            images.add(Pair(data.imageUri, resource))
                         }
                     }
                     emit(Resource.loading())
                 }
-
                 SUCCESS -> {
                     mutex.withLock {
-                        val index = images.indexOfFirst { it.first == resource.data!!.imageUri }
+                        val index =
+                            images.indexOfFirst { it.first == result.second.data!!.imageUri }
                         if (index != -1) {
-                            val newPair = images[index].copy(first = images[index].first, resource)
+                            val newPair =
+                                images[index].copy(first = images[index].first, result.second)
                             images[index] = newPair
                             if (index == currentIndex) {
-                                emit(Resource.success(resource.data!!.bitmap!!))
+                                emit(Resource.success(result.second.data!!.bitmap!!))
                             } else {
                                 Log.d(TAG, "Not current index. Skipping update.")
                             }
@@ -59,14 +68,36 @@ object DogLib : IDogLib {
                         }
                     }
                 }
+
                 ERROR -> {
                     mutex.withLock {
-                        val index = images.indexOfFirst { it.first == resource.data!!.imageUri }
+                        if (result.second.data == null) {
+                            val index =
+                                images.indexOfFirst { it.first == uuid }
+                            if (index != -1) {
+                                val newPair =
+                                    images[index].copy(first = images[index].first, result.second)
+                                images[index] = newPair
+                                if (index == currentIndex) {
+                                    emit(Resource.error(null, result.second.error!!))
+                                } else {
+                                    Log.d(TAG, "Not current index. Skipping update.")
+                                }
+                            } else {
+                                Log.e(TAG, "Resource not found.")
+                            }
+                            emit(Resource.error(null, result.second.error!!))
+                            return@withLock
+                        }
+
+                        val index =
+                            images.indexOfFirst { it.first == result.second.data!!.imageUri }
                         if (index != -1) {
-                            val newPair = images[index].copy(first = images[index].first, resource)
+                            val newPair =
+                                images[index].copy(first = images[index].first, result.second)
                             images[index] = newPair
                             if (index == currentIndex) {
-                                emit(Resource.error(null, resource.error!!))
+                                emit(Resource.error(null, result.second.error!!))
                             } else {
                                 Log.d(TAG, "Not current index. Skipping update.")
                             }
@@ -102,7 +133,7 @@ object DogLib : IDogLib {
     }
 
     override suspend fun getPreviousImage(context: Context): Flow<Resource<Bitmap>> = flow {
-        if (currentIndex == 0) {
+        if (currentIndex == 0 && images.size > 0) {
             currentIndex = images.size
         }
         val resource = images[--currentIndex].second

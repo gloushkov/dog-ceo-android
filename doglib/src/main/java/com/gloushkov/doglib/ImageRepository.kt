@@ -30,15 +30,15 @@ private const val TAG = "ImageRepository"
 internal class ImageRepository {
 
     private val remoteDataSource = RemoteDataSource()
-    suspend fun getRandomImage(context: Context): Flow<Resource<DogImage>> = flow {
+    suspend fun getRandomImage(context: Context, uuid: String): Flow<Pair<String, Resource<DogImage>>> = flow {
         // Call the API - get the next random image.
         // Afterwards we need to decide if we have that one saved or we need to load the bitmap from upstream as well
-        emit(Resource.loading(null))
+        emit(Pair(uuid, Resource.loading(null)))
         remoteDataSource.getImageUrl()
             .flowOn(Dispatchers.IO)
             .catch {
                 Log.e(TAG, "FlowCollector error: $it")
-                emit(Resource.error(null, Resource.Error.RuntimeException(it)))
+                emit(Pair(uuid, Resource.error(null, Resource.Error.RuntimeException(it))))
             }
             .collect {
                 when (it.status) {
@@ -46,16 +46,16 @@ internal class ImageRepository {
                     LOADING -> {}
                     SUCCESS -> {
                         //Notifying the library that we have received an image URL
-                        emit(Resource.loading(DogImage(it.data!!, null)))
+                        emit(Pair(uuid, Resource.loading(DogImage(it.data!!, null))))
 
                         //Check cache or download the image
                         val image = provideBitmap(context, it.data)
-                        emit(image)
+                        emit(Pair(uuid, image))
                     }
 
                     ERROR -> {
                         Log.e(TAG, "API Error. ${it.error!!}")
-                        emit(Resource.error(null, Resource.Error.Unknown))
+                        emit(Pair(uuid, Resource.error(null, Resource.Error.Unknown)))
                     }
                 }
             }

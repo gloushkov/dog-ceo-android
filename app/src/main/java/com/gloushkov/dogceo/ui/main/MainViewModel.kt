@@ -61,6 +61,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                 Log.e(TAG, "Loading image error: ${it.error}")
                 _loading.postValue(false)
                 _previousButtonEnabled.postValue(true)
+                _currentBitmap.postValue(null)
             }
         }
     }
