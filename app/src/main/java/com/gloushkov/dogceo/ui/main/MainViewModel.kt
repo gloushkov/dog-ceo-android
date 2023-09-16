@@ -39,6 +39,10 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     val submitError: LiveData<SubmitError?>
         get() = _submitError
 
+    private val _redirectToList = MutableLiveData<Int>()
+    val redirectToList: LiveData<Int>
+        get() = _redirectToList
+
     private val observer = FlowCollector<Resource<Bitmap>> {
         Log.v(TAG, "getImageObserver: ${it.status}")
         when (it.status) {
@@ -85,34 +89,35 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     fun onSubmit(input: String) {
-        if (validateSubmitInput(input)) {
-            //TODO call library
+        val validInput = validateSubmitInput(input)
+        if (validInput != -1) {
+            _redirectToList.postValue(validInput)
         }
     }
 
     @VisibleForTesting
-    fun validateSubmitInput(input: String): Boolean {
+    fun validateSubmitInput(input: String): Int {
         Log.v(TAG, "validateSubmitInput($input)")
         val count = try {
             Integer.parseInt(input)
         } catch (nfe: NumberFormatException) {
             Log.w(TAG, "NumberFormatException")
             _submitError.postValue(SubmitError.NOT_A_NUMBER)
-            return false
+            return -1
         }
         Log.v(TAG, "validateSubmitInput - count = $count")
         if (count < 1) {
             Log.w(TAG, "validateSubmitInput - SubmitError.BELLOW_RANGE")
             _submitError.postValue(SubmitError.BELLOW_RANGE)
-            return false;
+            return -1;
         } else if (count > 10) {
             Log.w(TAG, "validateSubmitInput - SubmitError.ABOVE_RANGE")
             _submitError.postValue(SubmitError.ABOVE_RANGE)
-            return false;
+            return -1;
         }
         Log.d(TAG, "validateSubmitInput - input valid")
         _submitError.postValue(null)
-        return true
+        return count
     }
 
     enum class SubmitError {

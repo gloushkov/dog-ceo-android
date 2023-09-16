@@ -9,8 +9,11 @@ import com.gloushkov.doglib.model.Resource.Status.ERROR
 import com.gloushkov.doglib.model.Resource.Status.IDLE
 import com.gloushkov.doglib.model.Resource.Status.LOADING
 import com.gloushkov.doglib.model.Resource.Status.SUCCESS
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.UUID
@@ -39,24 +42,17 @@ object DogLib : IDogLib {
                     mutex.withLock {
                         if (result.second.data == null) {
                             images.add(Pair(uuid, result.second))
-                        } else {
-                            val index = images.indexOfFirst { it.first == uuid }
-                            if (index != -1) {
-                                val newPair = Pair(result.second.data!!.imageUri, result.second)
-                                images[index] = newPair
-                            }
-                            Log.d(TAG, "API returned a URL. Downloading or fetching from disk.")
                         }
                     }
                     emit(Resource.loading())
                 }
+
                 SUCCESS -> {
                     mutex.withLock {
                         val index =
-                            images.indexOfFirst { it.first == result.second.data!!.imageUri }
+                            images.indexOfFirst { it.first == uuid }
                         if (index != -1) {
-                            val newPair =
-                                images[index].copy(first = images[index].first, result.second)
+                            val newPair = Pair(uuid, result.second)
                             images[index] = newPair
                             if (index == currentIndex) {
                                 emit(Resource.success(result.second.data!!.bitmap!!))
@@ -71,30 +67,11 @@ object DogLib : IDogLib {
 
                 ERROR -> {
                     mutex.withLock {
-                        if (result.second.data == null) {
-                            val index =
-                                images.indexOfFirst { it.first == uuid }
-                            if (index != -1) {
-                                val newPair =
-                                    images[index].copy(first = images[index].first, result.second)
-                                images[index] = newPair
-                                if (index == currentIndex) {
-                                    emit(Resource.error(null, result.second.error!!))
-                                } else {
-                                    Log.d(TAG, "Not current index. Skipping update.")
-                                }
-                            } else {
-                                Log.e(TAG, "Resource not found.")
-                            }
-                            emit(Resource.error(null, result.second.error!!))
-                            return@withLock
-                        }
 
                         val index =
-                            images.indexOfFirst { it.first == result.second.data!!.imageUri }
+                            images.indexOfFirst { it.first == uuid }
                         if (index != -1) {
-                            val newPair =
-                                images[index].copy(first = images[index].first, result.second)
+                            val newPair = Pair(uuid, result.second)
                             images[index] = newPair
                             if (index == currentIndex) {
                                 emit(Resource.error(null, result.second.error!!))
@@ -110,9 +87,16 @@ object DogLib : IDogLib {
         }
     }
 
-    override suspend fun getImages(context: Context, count: Int): List<Bitmap> {
-        TODO("Not yet implemented")
-    }
+
+    override suspend fun getImages(context: Context, count: Int): Flow<Resource<List<String>>> =
+        flow {
+            imageRepository.getRandomImages(count).flowOn(Dispatchers.IO)
+                .catch {
+                    emit(Resource.error(null, Resource.Error.RuntimeException(it)))
+                }.collect {
+                    emit(it as Resource<List<String>>)
+                }
+        }
 
     override suspend fun getNextImage(context: Context): Flow<Resource<Bitmap>> = flow {
         if (currentIndex == images.size - 1) {

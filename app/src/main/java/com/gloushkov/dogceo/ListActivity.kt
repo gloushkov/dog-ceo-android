@@ -1,17 +1,17 @@
 package com.gloushkov.dogceo
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.gloushkov.dogceo.ui.main.MainFragment
+import androidx.appcompat.app.AppCompatActivity
+import com.gloushkov.dogceo.ui.main.ListFragment
 
-class MainActivity : AppCompatActivity() {
+class ListActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_root)
-        if (savedInstanceState == null) {
+        intent.extras?.getInt(ListFragment.PARAM_NUMBER_OF_IMAGES)?.let {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.container, MainFragment.newInstance())
+                .replace(R.id.container, ListFragment.newInstance(it))
                 .commitNow()
         }
     }

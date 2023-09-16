@@ -19,7 +19,7 @@ interface IDogLib {
      * @param context [Context] is used to read/write the [Bitmap]s as [File]s in the cache directory.
      * @param count the number of [Bitmap]s to be returned.
      */
-    suspend fun getImages(context: Context, count: Int): List<Bitmap>
+    suspend fun getImages(context: Context, count: Int): Flow<Resource<List<String>>>
 
     /**
      * Gets the next image of a dog

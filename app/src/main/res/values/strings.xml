@@ -8,4 +8,6 @@
 
     <string name="submit_input_not_integer">You must input an integer.</string>
     <string name="submit_input_count_range_not_valid">You must enter a number between 1 and 10.</string>
+
+    <string name="general_error">Something went wrong</string>
 </resources>

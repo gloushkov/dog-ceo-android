@@ -54,13 +54,49 @@ class RemoteDataSource {
         }
     }
 
+    suspend fun getRandomImages(count: Int) = flow {
+        try {
+            val response = restService.getRandomImages(count).execute()
+
+            if (response.isSuccessful) {
+                response.body()?.let {
+                    if (!it.isOk()) {
+                        emit(
+                            Resource.error(
+                                null,
+                                Resource.Error.ApiError(it.status)
+                            )
+                        )
+
+                    } else {
+                        emit(Resource.success(it.data))
+                    }
+                }
+            } else {
+                emit(
+                    Resource.error(
+                        null,
+                        Resource.Error.HttpError(response.code())
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            emit(Resource.error(null, Resource.Error.RuntimeException(e.fillInStackTrace())))
+        }
+    }
+
     suspend fun downloadBitmap(url: String): Resource<Bitmap> = withContext(Dispatchers.IO) {
         suspendCoroutine {
             try {
                 val bitmap = BitmapFactory.decodeStream(URL(url).openConnection().getInputStream())
                 it.resume(Resource.success(bitmap))
             } catch (e: Exception) {
-                it.resume(Resource.error(null, Resource.Error.RuntimeException(e.fillInStackTrace())))
+                it.resume(
+                    Resource.error(
+                        null,
+                        Resource.Error.RuntimeException(e.fillInStackTrace())
+                    )
+                )
             }
         }
     }

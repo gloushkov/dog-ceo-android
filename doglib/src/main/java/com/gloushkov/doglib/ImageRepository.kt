@@ -60,6 +60,8 @@ internal class ImageRepository {
                 }
             }
     }
+    suspend fun getRandomImages(count: Int):  Flow<Resource<out List<String>>> =
+        remoteDataSource.getRandomImages(count)
 
     private suspend fun provideBitmap(
         context: Context,

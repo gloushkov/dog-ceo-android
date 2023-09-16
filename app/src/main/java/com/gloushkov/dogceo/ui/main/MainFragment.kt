@@ -1,18 +1,24 @@
 package com.gloushkov.dogceo.ui.main
 
-import androidx.lifecycle.ViewModelProvider
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import com.gloushkov.dogceo.ListActivity
 import com.gloushkov.dogceo.R
 import com.gloushkov.dogceo.databinding.FragmentMainBinding
-import com.gloushkov.dogceo.ui.main.MainViewModel.SubmitError.*
+import com.gloushkov.dogceo.ui.main.MainViewModel.SubmitError.ABOVE_RANGE
+import com.gloushkov.dogceo.ui.main.MainViewModel.SubmitError.BELLOW_RANGE
+import com.gloushkov.dogceo.ui.main.MainViewModel.SubmitError.NOT_A_NUMBER
+import com.gloushkov.dogceo.ui.main.MainViewModel.SubmitError.RESOURCE_ERROR
 
 private const val TAG = "MainFragment"
+
 class MainFragment : Fragment() {
 
     private lateinit var binding: FragmentMainBinding
@@ -26,7 +32,6 @@ class MainFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
-
     }
 
     override fun onCreateView(
@@ -50,12 +55,17 @@ class MainFragment : Fragment() {
         viewModel.submitError.observe(viewLifecycleOwner) {
             Log.w(TAG, "submitError: $it")
             when (it) {
-                NOT_A_NUMBER -> binding.tilCount.error = requireContext().resources.getString(R.string.submit_input_not_integer)
-                BELLOW_RANGE, ABOVE_RANGE -> binding.tilCount.error = requireContext().resources.getString(R.string.submit_input_count_range_not_valid)
+                NOT_A_NUMBER -> binding.tilCount.error =
+                    requireContext().resources.getString(R.string.submit_input_not_integer)
+
+                BELLOW_RANGE, ABOVE_RANGE -> binding.tilCount.error =
+                    requireContext().resources.getString(R.string.submit_input_count_range_not_valid)
+
                 RESOURCE_ERROR -> {
                     binding.tilCount.error = null
                     //TODO show some ui error
                 }
+
                 null -> binding.tilCount.error = null
             }
         }
@@ -82,6 +92,12 @@ class MainFragment : Fragment() {
 
         binding.btnSubmit.setOnClickListener {
             viewModel.onSubmit(binding.etCount.text.toString())
+        }
+
+        viewModel.redirectToList.observe(viewLifecycleOwner) {
+            startActivity(Intent(context, ListActivity::class.java).apply {
+                putExtra(ListFragment.PARAM_NUMBER_OF_IMAGES, it)
+            })
         }
     }
 }
