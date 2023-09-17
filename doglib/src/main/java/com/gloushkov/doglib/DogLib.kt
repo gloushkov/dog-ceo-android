@@ -3,6 +3,7 @@ package com.gloushkov.doglib
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import com.gloushkov.doglib.model.DogImage
 import com.gloushkov.doglib.model.Resource
 import com.gloushkov.doglib.model.Resource.Status.ERROR
@@ -28,7 +29,8 @@ object DogLib : IDogLib {
     private val imageRepository = ImageRepository()
 
     //TODO refactor so that the Bitmap is not stored in RAM. Replace with LRU cache and keep track only of urls.
-    private val images: ArrayList<Pair<String, Resource<DogImage>>> = arrayListOf()
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    internal val images: ArrayList<Pair<String, Resource<DogImage>>> = arrayListOf()
 
     private val mutex = Mutex()
 
@@ -99,7 +101,7 @@ object DogLib : IDogLib {
         }
 
     override suspend fun getNextImage(context: Context): Flow<Resource<Bitmap>> = flow {
-        if (currentIndex == images.size - 1) {
+        if (currentIndex == images.size - 1 || images.isEmpty()) {
             Log.d(TAG, "At end of list. Loading new.")
             currentIndex++
             getImage(context).collect {

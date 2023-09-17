@@ -1,24 +1,34 @@
 package com.gloushkov.dogceo.ui.main
 
-import android.util.Log
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import android.app.Application
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.gloushkov.dogceo.MainDispatcherRule
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TestRule
+import org.junit.runner.RunWith
+import org.mockito.Mock
 
 /**
  * Created by Ognian Gloushkov on 11.09.23.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(AndroidJUnit4::class)
+
 class MainViewModelTest {
 
     @get:Rule
-    var rule: TestRule = InstantTaskExecutorRule()
+    val mainDispatcherRule = MainDispatcherRule()
 
-    private val viewModel = MainViewModel()
 
-    @Test fun mainViewModel_validateSubmitInput_ok() {
-        assertTrue(viewModel.validateSubmitInput("2"))
+    @Mock
+    private val viewModel = MainViewModel(Application())
+
+    @Test fun mainViewModel_validateSubmitInput_ok() = runTest(UnconfinedTestDispatcher()) {
+        assert(viewModel.validateSubmitInput("2") > -1)
         assert(viewModel.submitError.value == null)
     }
 

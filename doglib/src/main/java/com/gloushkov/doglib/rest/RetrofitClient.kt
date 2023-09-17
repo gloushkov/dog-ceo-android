@@ -1,5 +1,6 @@
 package com.gloushkov.doglib.rest
 
+import androidx.annotation.VisibleForTesting
 import retrofit2.Retrofit
 import retrofit2.converter.jackson.JacksonConverterFactory
 
@@ -9,7 +10,8 @@ import retrofit2.converter.jackson.JacksonConverterFactory
 internal object RetrofitClient {
     private const val BASE_URL = "https://dog.ceo/api/"
 
-    private val retrofit: Retrofit by lazy {
+    @VisibleForTesting
+    val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(JacksonConverterFactory.create())
